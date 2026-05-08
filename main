@@ -1,0 +1,484 @@
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --green:#00FF41;--greendim:#00cc33;--glass:rgba(0,255,65,0.06);
+  --termbg:#080f08;--termcard:#0d160d;--dark:#020B18;--white:#e8ffe8;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--dark);color:var(--white);font-family:'Share Tech Mono',monospace;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.13) 2px,rgba(0,0,0,0.13) 4px);}
+
+/* MUTE BTN */
+#muteBtn{position:fixed;bottom:18px;right:18px;z-index:9999;background:#0d160d;border:1px solid #1a3a1a;
+  color:var(--green);font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px 13px;
+  border-radius:2px;cursor:pointer;letter-spacing:0.08em;transition:all 0.2s;}
+#muteBtn:hover{border-color:var(--green);}
+
+/* TERMINAL */
+#term{position:fixed;inset:0;z-index:9000;background:#060c06;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.9s,transform 0.9s;}
+#term.hide{opacity:0;pointer-events:none;transform:scale(1.05);}
+.tw{width:min(660px,94vw);background:var(--termcard);border-radius:10px;overflow:hidden;
+  box-shadow:0 0 0 1px #1f3a1f,0 0 40px rgba(0,255,65,0.2),0 0 100px rgba(0,255,65,0.07);}
+.tb{display:flex;align-items:center;gap:8px;padding:12px 18px;background:#0a120a;border-bottom:1px solid #1a2e1a;}
+.tb-dot{width:13px;height:13px;border-radius:50%;}
+.tb-title{font-size:13px;color:#4a7a4a;margin-left:6px;letter-spacing:0.05em;}
+.tc{padding:28px 28px 32px;min-height:290px;}
+.tline{font-size:14px;line-height:2;color:var(--green);opacity:0;transform:translateY(4px);transition:opacity 0.3s,transform 0.3s;}
+.tline.show{opacity:1;transform:none;}
+.ok{color:#00FF41;font-weight:700;}.dim{color:#4a7a4a;}.bright{color:#88ffaa;}.cmd{color:#ccffcc;}
+.pbar-wrap{margin:14px 0 6px;display:flex;align-items:center;gap:12px;font-size:13px;opacity:0;transition:opacity 0.4s;}
+.pbar-wrap.show{opacity:1;}
+.pbar-outer{flex:1;height:18px;border:1px solid #2a5a2a;border-radius:2px;background:#0a120a;overflow:hidden;}
+.pbar-inner{height:100%;width:0%;background:var(--green);box-shadow:0 0 8px var(--green);transition:width 0.05s linear;border-radius:1px;}
+.pbar-pct{color:var(--green);min-width:42px;text-align:right;}
+.cursor{display:inline-block;width:9px;height:15px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:3px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.press-hint{margin-top:20px;text-align:center;font-size:12px;color:#3a5a3a;letter-spacing:0.15em;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.3;}50%{opacity:1;}}
+
+/* LAUNCH FLASH */
+#flash{position:fixed;inset:0;z-index:8999;background:var(--green);opacity:0;pointer-events:none;transition:opacity 0.12s;}
+
+/* SITE */
+#site{opacity:0;transition:opacity 0.9s;pointer-events:none;}
+#canvas3d{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+.float-dots{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
+.dot{position:absolute;border-radius:50%;opacity:0.5;animation:floatup linear infinite;}
+@keyframes floatup{0%{transform:translateY(100vh);}100%{transform:translateY(-10vh);}}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;
+  padding:1rem 3rem;background:rgba(6,12,6,0.85);backdrop-filter:blur(14px);border-bottom:1px solid #1a3a1a;}
+.logo{font-size:1.3rem;color:var(--green);letter-spacing:0.1em;}
+.logo span{color:#4a7a4a;}
+.nav-links{display:flex;gap:2.5rem;list-style:none;}
+.nav-links a{color:#4a7a4a;text-decoration:none;font-size:0.82rem;letter-spacing:0.12em;text-transform:uppercase;transition:color 0.2s;}
+.nav-links a:hover{color:var(--green);}
+section{position:relative;z-index:10;}
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:7rem 2rem 4rem;}
+.hero-tag{font-size:0.78rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--green);
+  border:1px solid #1f3f1f;padding:0.4rem 1.2rem;border-radius:2px;margin-bottom:1.8rem;background:var(--glass);}
+.hero-title{font-size:clamp(2.4rem,6vw,4.8rem);line-height:1.1;margin-bottom:0.6rem;color:#ccffcc;text-shadow:0 0 40px rgba(0,255,65,0.3);}
+.hero-title span{color:var(--green);text-shadow:0 0 20px var(--green);}
+.hero-sub{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;color:#4a7a4a;margin:1rem 0 2.5rem;max-width:500px;line-height:1.8;}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;}
+.btn-primary{padding:0.8rem 2rem;border-radius:2px;font-size:0.88rem;font-family:'Share Tech Mono',monospace;letter-spacing:0.08em;
+  background:var(--green);color:#060c06;border:none;cursor:pointer;transition:all 0.2s;font-weight:700;text-transform:uppercase;}
+.btn-primary:hover{box-shadow:0 0 20px rgba(0,255,65,0.5);transform:translateY(-2px);}
+.btn-outline{padding:0.8rem 2rem;border-radius:2px;font-size:0.88rem;font-family:'Share Tech Mono',monospace;letter-spacing:0.08em;
+  background:transparent;color:var(--green);border:1px solid #2a5a2a;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.btn-outline:hover{background:var(--glass);border-color:var(--green);}
+.scroll-hint{margin-top:4rem;display:flex;flex-direction:column;align-items:center;gap:0.5rem;color:#2a4a2a;font-size:0.75rem;letter-spacing:0.15em;}
+.scroll-line{width:1px;height:55px;background:linear-gradient(to bottom,transparent,var(--green));animation:drop 2s ease-in-out infinite;}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}100%{transform:scaleY(0);transform-origin:bottom;}}
+.section-wrap{padding:6rem 2rem;max-width:1080px;margin:0 auto;}
+.section-label{font-size:0.75rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--green);margin-bottom:0.6rem;}
+.section-title{font-size:clamp(1.8rem,3.5vw,2.6rem);margin-bottom:3rem;line-height:1.2;color:#ccffcc;}
+.section-title em{font-style:normal;color:var(--green);text-shadow:0 0 12px rgba(0,255,65,0.4);}
+#about,#skills,#projects,#contact{border-top:1px solid #0f200f;}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+.about-text p{color:#4a7a4a;line-height:1.9;margin-bottom:1rem;font-family:'Space Grotesk',sans-serif;font-size:0.97rem;}
+.about-card{background:var(--termcard);border:1px solid #1a3a1a;border-radius:4px;padding:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.stat{text-align:center;padding:1rem;border:1px solid #0f200f;border-radius:2px;}
+.stat-num{font-size:2rem;color:var(--green);text-shadow:0 0 10px rgba(0,255,65,0.4);}
+.stat-label{font-size:0.72rem;color:#3a5a3a;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.3rem;}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.2rem;}
+.skill-card{background:var(--termcard);border:1px solid #1a3a1a;border-radius:4px;padding:1.4rem;transition:all 0.3s;cursor:default;}
+.skill-card:hover{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,65,0.1);transform:translateY(-3px);}
+.skill-icon{font-size:1.6rem;margin-bottom:0.6rem;}
+.skill-name{font-size:0.9rem;color:#ccffcc;margin-bottom:0.3rem;}
+.skill-level{font-size:0.75rem;color:#3a5a3a;margin-bottom:0.8rem;}
+.skill-bar{height:3px;background:#0f200f;border-radius:1px;overflow:hidden;}
+.skill-fill{height:100%;background:var(--green);box-shadow:0 0 6px var(--green);transition:width 1.2s ease;}
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.8rem;}
+.project-card{background:var(--termcard);border:1px solid #1a3a1a;border-radius:4px;overflow:hidden;transition:all 0.3s;cursor:default;}
+.project-card:hover{transform:translateY(-5px);border-color:var(--green);box-shadow:0 0 30px rgba(0,255,65,0.1);}
+.project-img{height:155px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.term-preview{position:absolute;inset:0;padding:14px;font-size:10px;color:#2a5a2a;line-height:1.7;overflow:hidden;}
+.term-preview .g{color:var(--green);}
+.p1{background:#050e05;}.p2{background:#060c09;}.p3{background:#05090e;}
+.project-body{padding:1.3rem;}
+.project-tags{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.7rem;}
+.tag{font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:1px;background:rgba(0,255,65,0.08);color:var(--green);border:1px solid #1a3a1a;}
+.project-name{font-size:0.95rem;color:#ccffcc;margin-bottom:0.4rem;}
+.project-desc{font-size:0.83rem;color:#3a5a3a;line-height:1.6;font-family:'Space Grotesk',sans-serif;}
+.project-links{display:flex;gap:0.8rem;margin-top:0.9rem;}
+.project-links a{font-size:0.78rem;color:var(--green);text-decoration:none;border:1px solid #1a3a1a;padding:0.28rem 0.7rem;border-radius:2px;transition:all 0.2s;}
+.project-links a:hover{background:var(--glass);}
+.contact-inner{max-width:580px;margin:0 auto;text-align:center;}
+.contact-inner p{color:#4a7a4a;line-height:1.8;margin-bottom:2rem;font-family:'Space Grotesk',sans-serif;}
+.contact-form{display:flex;flex-direction:column;gap:1rem;text-align:left;}
+.contact-form input,.contact-form textarea{background:var(--termcard);border:1px solid #1a3a1a;border-radius:2px;
+  padding:0.85rem 1.1rem;color:#ccffcc;font-family:'Share Tech Mono',monospace;font-size:0.88rem;
+  outline:none;transition:border-color 0.2s;resize:none;}
+.contact-form input:focus,.contact-form textarea:focus{border-color:var(--green);box-shadow:0 0 10px rgba(0,255,65,0.08);}
+.contact-form input::placeholder,.contact-form textarea::placeholder{color:#2a4a2a;}
+footer{text-align:center;padding:2rem;color:#2a4a2a;font-size:0.8rem;border-top:1px solid #0f200f;position:relative;z-index:10;}
+@media(max-width:700px){nav{padding:1rem 1.5rem;}.nav-links{gap:1.2rem;}.about-grid{grid-template-columns:1fr;}.tc{padding:18px 16px 22px;}.tline{font-size:12px;}}
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<button id="muteBtn" onclick="toggleMute()">🔊 SOUND ON</button>
+<div id="flash"></div>
+
+<!-- TERMINAL -->
+<div id="term" onclick="launchSite()">
+  <div class="tw">
+    <div class="tb">
+      <div class="tb-dot" style="background:#ff5f57"></div>
+      <div class="tb-dot" style="background:#febc2e"></div>
+      <div class="tb-dot" style="background:#28c840"></div>
+      <div class="tb-title">ricky@portfolio:~ — 3D Environment</div>
+    </div>
+    <div class="tc" id="tc"></div>
+  </div>
+  <div class="press-hint" id="pressHint" style="opacity:0;transition:opacity 0.6s;margin-top:20px;">▸ PRESS ENTER OR CLICK ANYWHERE TO LAUNCH</div>
+</div>
+
+<!-- SITE -->
+<div id="site">
+  <canvas id="canvas3d"></canvas>
+  <div class="float-dots" id="floatDots"></div>
+  <nav>
+    <div class="logo"><span>~/</span>ricky.dev</div>
+    <ul class="nav-links">
+      <li><a href="#about">about</a></li>
+      <li><a href="#skills">skills</a></li>
+      <li><a href="#projects">projects</a></li>
+      <li><a href="#contact">contact</a></li>
+    </ul>
+  </nav>
+  <section id="hero">
+    <div class="hero-tag">[ Web &amp; App Developer · AI Enthusiast ]</div>
+    <h1 class="hero-title">Hello, I'm <span>Ricky</span><br>I Build Digital Futures</h1>
+    <p class="hero-sub">A passionate developer exploring the intersection of Web, App &amp; Artificial Intelligence. Turning ideas into living, breathing products.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">./view_projects</button>
+      <button class="btn-outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">./contact_me</button>
+    </div>
+    <div class="scroll-hint"><span>SCROLL</span><div class="scroll-line"></div></div>
+  </section>
+  <section id="about">
+    <div class="section-wrap">
+      <div class="about-grid">
+        <div class="about-text">
+          <div class="section-label">// about_me</div>
+          <h2 class="section-title">Crafting the <em>Future</em>,<br>One Commit at a Time</h2>
+          <p>Hey! I'm Ricky — a curious beginner developer with a deep passion for Web, App development, and Artificial Intelligence. I love building things that look great and work beautifully.</p>
+          <p>Currently learning, experimenting, and growing fast. Every project is a new adventure, and I'm here for all of it. Let's build something amazing together.</p>
+        </div>
+        <div class="about-card">
+          <div class="stat"><div class="stat-num">5+</div><div class="stat-label">Projects</div></div>
+          <div class="stat"><div class="stat-num">AI</div><div class="stat-label">Focus</div></div>
+          <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Curiosity</div></div>
+          <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Passion</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="skills">
+    <div class="section-wrap">
+      <div class="section-label">// skills.log</div>
+      <h2 class="section-title">My <em>Toolkit</em></h2>
+      <div class="skills-grid">
+        <div class="skill-card"><div class="skill-icon">🌐</div><div class="skill-name">HTML &amp; CSS</div><div class="skill-level">// beginner → growing</div><div class="skill-bar"><div class="skill-fill" style="width:65%"></div></div></div>
+        <div class="skill-card"><div class="skill-icon">⚡</div><div class="skill-name">JavaScript</div><div class="skill-level">// learning</div><div class="skill-bar"><div class="skill-fill" style="width:45%"></div></div></div>
+        <div class="skill-card"><div class="skill-icon">📱</div><div class="skill-name">App Development</div><div class="skill-level">// exploring</div><div class="skill-bar"><div class="skill-fill" style="width:35%"></div></div></div>
+        <div class="skill-card"><div class="skill-icon">🤖</div><div class="skill-name">AI &amp; Machine Learning</div><div class="skill-level">// initializing</div><div class="skill-bar"><div class="skill-fill" style="width:30%"></div></div></div>
+        <div class="skill-card"><div class="skill-icon">🐍</div><div class="skill-name">Python</div><div class="skill-level">// learning</div><div class="skill-bar"><div class="skill-fill" style="width:40%"></div></div></div>
+        <div class="skill-card"><div class="skill-icon">🔧</div><div class="skill-name">IT &amp; Networking</div><div class="skill-level">// exploring</div><div class="skill-bar"><div class="skill-fill" style="width:50%"></div></div></div>
+      </div>
+    </div>
+  </section>
+  <section id="projects">
+    <div class="section-wrap">
+      <div class="section-label">// projects.list</div>
+      <h2 class="section-title">What I've <em>Built</em></h2>
+      <div class="projects-grid">
+        <div class="project-card">
+          <div class="project-img p1"><div class="term-preview"><span class="g">$</span> npm run build<br><span class="g">✔</span> compiled successfully<br><span class="g">✔</span> 3D scene loaded<br><span class="g">✔</span> assets bundled<br><span class="g">→</span> localhost:3000</div></div>
+          <div class="project-body"><div class="project-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">Three.js</span></div><div class="project-name">3D Portfolio Website</div><div class="project-desc">My personal portfolio with terminal intro, 3D background, and green theme animations.</div><div class="project-links"><a href="#">live_demo</a><a href="#">github</a></div></div>
+        </div>
+        <div class="project-card">
+          <div class="project-img p2"><div class="term-preview"><span class="g">$</span> python main.py<br><span class="g">[OK]</span> AI model loaded<br><span class="g">[OK]</span> Tasks parsed<br><span class="g">→</span> Prioritizing...<br><span class="g">✔</span> Done. 7 tasks sorted</div></div>
+          <div class="project-body"><div class="project-tags"><span class="tag">Python</span><span class="tag">AI</span><span class="tag">NLP</span></div><div class="project-name">AI Task Manager</div><div class="project-desc">An intelligent to-do app using AI to prioritize and organize daily tasks smartly.</div><div class="project-links"><a href="#">live_demo</a><a href="#">github</a></div></div>
+        </div>
+        <div class="project-card">
+          <div class="project-img p3"><div class="term-preview"><span class="g">$</span> flutter run<br><span class="g">✔</span> App compiled<br><span class="g">→</span> Device connected<br><span class="g">→</span> Tracking sessions<br><span class="g">✔</span> 4h 20m logged</div></div>
+          <div class="project-body"><div class="project-tags"><span class="tag">App Dev</span><span class="tag">UI/UX</span></div><div class="project-name">Study Tracker App</div><div class="project-desc">A mobile-first app that helps students track study hours, goals, and progress visually.</div><div class="project-links"><a href="#">live_demo</a><a href="#">github</a></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="contact">
+    <div class="section-wrap">
+      <div class="contact-inner">
+        <div class="section-label">// contact.sh</div>
+        <h2 class="section-title">Let's <em>Connect</em></h2>
+        <p>Have a project in mind, want to collaborate, or just want to say hello? Drop a message — I'll respond faster than a ping to localhost.</p>
+        <div class="contact-form">
+          <input type="text" placeholder="// your_name">
+          <input type="email" placeholder="// your_email@domain.com">
+          <textarea rows="5" placeholder="// your_message..."></textarea>
+          <button class="btn-primary" style="align-self:flex-start">./send_message ▸</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer><p>// built_by: <span style="color:var(--green)">Ricky</span> · version: 2025.1 · status: <span style="color:var(--green)">online</span></p></footer>
+</div>
+
+<script>
+// ── AUDIO ENGINE (Web Audio API — no external files needed) ──
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx, muted = false;
+
+function initAudio() {
+  if(!ctx) ctx = new AC();
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+}
+
+function beep(freq=880, dur=0.08, vol=0.18, type='square', delay=0) {
+  if(muted || !ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = type; o.frequency.value = freq;
+  const t = ctx.currentTime + delay;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.start(t); o.stop(t+dur+0.05);
+}
+
+function typeBeep() {
+  if(muted || !ctx) return;
+  const freqs = [660,720,600,680,740,620];
+  beep(freqs[Math.floor(Math.random()*freqs.length)], 0.04, 0.08, 'square');
+}
+
+function okChime(delay=0) {
+  if(muted || !ctx) return;
+  beep(523, 0.07, 0.12, 'sine', delay);
+  beep(659, 0.07, 0.12, 'sine', delay+0.08);
+  beep(784, 0.1,  0.15, 'sine', delay+0.16);
+}
+
+function progressTick(pct) {
+  if(muted || !ctx) return;
+  const freq = 200 + pct * 6;
+  beep(freq, 0.03, 0.06, 'square');
+}
+
+function launchSound() {
+  if(muted || !ctx) return;
+  // power-up sweep
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'sawtooth';
+  const t = ctx.currentTime;
+  o.frequency.setValueAtTime(80, t);
+  o.frequency.exponentialRampToValueAtTime(1200, t+0.4);
+  g.gain.setValueAtTime(0.25, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.5);
+  o.start(t); o.stop(t+0.6);
+  // tri-tone success
+  beep(523, 0.12, 0.18, 'sine', 0.45);
+  beep(659, 0.12, 0.18, 'sine', 0.58);
+  beep(1047,0.2,  0.22, 'sine', 0.71);
+}
+
+function ambientHum() {
+  if(muted || !ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'sine'; o.frequency.value = 55;
+  g.gain.setValueAtTime(0.04, ctx.currentTime);
+  g.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 6);
+  o.start(ctx.currentTime); o.stop(ctx.currentTime + 6);
+}
+
+// ── TERMINAL BOOT ──
+const bootLines = [
+  {html:'<span class="ok">[ OK ]</span> <span class="bright">3D environment initialized.</span>', delay:500},
+  {html:'<span class="ok">[ OK ]</span> <span class="bright">Baked textures applied.</span>',      delay:1050},
+  {html:'<span class="ok">[ OK ]</span> <span class="bright">Camera rig calibrated.</span>',        delay:1600},
+  {html:'<span class="dim">&nbsp;</span>',                                                           delay:2000},
+  {html:'<span class="cmd">$ $ compiling scene pipeline...</span>',                                  delay:2200},
+];
+
+const tc = document.getElementById('tc');
+let canLaunch = false;
+let audioStarted = false;
+
+function startBoot() {
+  initAudio();
+  ambientHum();
+
+  bootLines.forEach(({html, delay}, i) => {
+    setTimeout(() => {
+      const d = document.createElement('div');
+      d.className = 'tline'; d.innerHTML = html; tc.appendChild(d);
+      // type sound per character feel
+      const chars = d.textContent.length;
+      for(let c=0; c<Math.min(chars,8); c++) {
+        setTimeout(() => typeBeep(), c * 28);
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')));
+      // chime on OK lines
+      if(html.includes('[OK]') || html.includes('[ OK ]')) okChime(0.25);
+    }, delay);
+  });
+
+  // progress bar
+  setTimeout(() => {
+    const pb = document.createElement('div');
+    pb.className = 'pbar-wrap show';
+    pb.innerHTML = '<span style="color:#3a5a3a;font-size:13px">[</span><div class="pbar-outer"><div class="pbar-inner" id="pbar"></div></div><span style="color:#3a5a3a;font-size:13px">]</span><span class="pbar-pct" id="ppct">0%</span>';
+    tc.appendChild(pb);
+
+    let pct = 0, lastTick = 0;
+    const iv = setInterval(() => {
+      pct = Math.min(100, pct + Math.random()*2.5+0.6);
+      document.getElementById('pbar').style.width = pct+'%';
+      document.getElementById('ppct').textContent = Math.floor(pct)+'%';
+      if(Math.floor(pct) - lastTick >= 8) { progressTick(pct); lastTick = Math.floor(pct); }
+      if(pct >= 100) {
+        clearInterval(iv);
+        progressTick(100);
+        setTimeout(() => {
+          const d2 = document.createElement('div');
+          d2.className = 'tline';
+          d2.innerHTML = '<span class="dim">Awaiting asset pipeline...</span> <span class="cursor"></span>';
+          tc.appendChild(d2);
+          requestAnimationFrame(() => requestAnimationFrame(() => d2.classList.add('show')));
+          typeBeep(); typeBeep();
+
+          setTimeout(() => {
+            const d3 = document.createElement('div');
+            d3.className = 'tline';
+            d3.innerHTML = '<span class="ok">[ OK ]</span> <span class="bright">All systems ready. Welcome, Ricky.</span>';
+            tc.appendChild(d3);
+            requestAnimationFrame(() => requestAnimationFrame(() => d3.classList.add('show')));
+            okChime(0.1);
+            setTimeout(() => {
+              document.getElementById('pressHint').style.opacity = '1';
+              canLaunch = true;
+              // repeating soft beep hint
+              let hintBeeps = 0;
+              const hb = setInterval(() => {
+                if(!canLaunch || muted){ clearInterval(hb); return; }
+                beep(440, 0.05, 0.06, 'sine');
+                if(++hintBeeps > 6) clearInterval(hb);
+              }, 900);
+            }, 900);
+          }, 700);
+        }, 200);
+      }
+    }, 55);
+  }, 2700);
+}
+
+// auto-start boot on first interaction (needed for AudioContext policy)
+let bootStarted = false;
+function ensureBoot() {
+  if(!bootStarted){ bootStarted=true; startBoot(); }
+}
+document.getElementById('term').addEventListener('mouseover', ensureBoot, {once:true});
+document.addEventListener('keydown', ensureBoot, {once:true});
+// fallback auto-start after 300ms
+setTimeout(ensureBoot, 300);
+
+document.addEventListener('keydown', e => { if(e.key==='Enter' && canLaunch) launchSite(); });
+
+function launchSite() {
+  if(!canLaunch) return;
+  canLaunch = false;
+  initAudio();
+  launchSound();
+
+  // green flash
+  const flash = document.getElementById('flash');
+  flash.style.opacity = '0.7';
+  setTimeout(() => { flash.style.transition='opacity 0.5s'; flash.style.opacity='0'; }, 120);
+
+  const term = document.getElementById('term');
+  term.classList.add('hide');
+  setTimeout(() => {
+    term.style.display = 'none';
+    const site = document.getElementById('site');
+    site.style.pointerEvents = 'auto';
+    site.style.opacity = '1';
+    initThreeJS();
+    initFloatDots();
+  }, 900);
+}
+
+// ── THREE.JS ──
+function initThreeJS() {
+  const canvas = document.getElementById('canvas3d');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+  camera.position.set(0,0,30);
+  scene.add(new THREE.AmbientLight(0x001a00,2));
+  const dl=new THREE.DirectionalLight(0x00FF41,2.5); dl.position.set(10,10,10); scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x00aa22,1.5); dl2.position.set(-10,-5,5); scene.add(dl2);
+  const sGeo=new THREE.SphereGeometry(0.07,6,6);
+  const sm1=new THREE.MeshStandardMaterial({color:0x00FF41,emissive:0x00FF41,emissiveIntensity:0.7});
+  const sm2=new THREE.MeshStandardMaterial({color:0x00aa22,emissive:0x00aa22,emissiveIntensity:0.4});
+  const parts=[];
+  for(let i=0;i<220;i++){
+    const m=new THREE.Mesh(sGeo,i%3===0?sm1:sm2);
+    m.position.set((Math.random()-.5)*90,(Math.random()-.5)*65,(Math.random()-.5)*40);
+    scene.add(m); parts.push({mesh:m,sx:(Math.random()-.5)*0.005,sy:(Math.random()-.5)*0.005});
+  }
+  const tor=new THREE.Mesh(new THREE.TorusGeometry(9,.07,8,90),new THREE.MeshStandardMaterial({color:0x00FF41,emissive:0x00FF41,emissiveIntensity:0.3,transparent:true,opacity:0.25}));
+  tor.rotation.x=Math.PI*.3; scene.add(tor);
+  const tor2=new THREE.Mesh(new THREE.TorusGeometry(14,.04,8,90),new THREE.MeshStandardMaterial({color:0x00aa22,emissive:0x00aa22,emissiveIntensity:0.2,transparent:true,opacity:0.15}));
+  tor2.rotation.x=-Math.PI*.2; tor2.rotation.y=Math.PI*.1; scene.add(tor2);
+  const ic=new THREE.Mesh(new THREE.IcosahedronGeometry(3.5,1),new THREE.MeshStandardMaterial({color:0x0a1a0a,emissive:0x00FF41,emissiveIntensity:0.2,transparent:true,opacity:0.6}));
+  ic.position.set(14,-2,-5); scene.add(ic);
+  const ic2=new THREE.Mesh(new THREE.IcosahedronGeometry(2,1),new THREE.MeshStandardMaterial({color:0x00aa22,emissive:0x00aa22,emissiveIntensity:0.3,transparent:true,opacity:0.4,wireframe:true}));
+  ic2.position.set(-13,4,-8); scene.add(ic2);
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2;});
+  window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+  (function animate(){
+    requestAnimationFrame(animate);
+    parts.forEach(p=>{
+      p.mesh.position.x+=p.sx; p.mesh.position.y+=p.sy;
+      if(p.mesh.position.x>45)p.mesh.position.x=-45; if(p.mesh.position.x<-45)p.mesh.position.x=45;
+      if(p.mesh.position.y>32)p.mesh.position.y=-32; if(p.mesh.position.y<-32)p.mesh.position.y=32;
+    });
+    tor.rotation.z+=0.003; tor.rotation.y+=0.001;
+    tor2.rotation.z-=0.002; tor2.rotation.x+=0.001;
+    ic.rotation.x+=0.005; ic.rotation.y+=0.007;
+    ic2.rotation.x-=0.006; ic2.rotation.y-=0.004;
+    camera.position.x+=(mx*3-camera.position.x)*.03;
+    camera.position.y+=(-my*2-camera.position.y)*.03;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  })();
+}
+
+function initFloatDots(){
+  const fd=document.getElementById('floatDots');
+  for(let i=0;i<16;i++){
+    const d=document.createElement('div'); d.className='dot';
+    const sz=Math.random()*3+1.5,dur=Math.random()*20+12,delay=Math.random()*18;
+    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;bottom:-10px;background:#00FF41;animation-duration:${dur}s;animation-delay:-${delay}s;`;
+    fd.appendChild(d);
+  }
+}
+</script>
